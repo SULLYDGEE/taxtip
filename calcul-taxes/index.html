@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calcul de la taxe au Québec (TPS + TVQ) et du pourboire | TaxTip</title>
+<meta name="description" content="Calculez en une seconde le prix avec taxes au Québec (TPS 5 % + TVQ 9,975 %), en Ontario (TVH 13 %) et dans les 13 provinces et territoires, avec le pourboire et la part de chacun.">
+<meta name="apple-itunes-app" content="app-id=6761360591">
+<link rel="canonical" href="https://sullydgee.github.io/taxtip/calcul-taxes/">
+<meta property="og:title" content="Calcul de la taxe au Québec et du pourboire">
+<meta property="og:description" content="TPS, TVQ, TVH : le prix réel avec taxes et pourboire, province par province.">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #faf7f5; --surface: #ffffff; --fg: #1c1a1a; --muted: #6b6461; --line: #e7e0dc;
+    --accent: #b3121f; --accent-soft: #fbe9ea; --ok: #1f6f4a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151313; --surface: #1f1c1c; --fg: #f1ecea; --muted: #a59d99; --line: #353030;
+            --accent: #ff6b74; --accent-soft: #3a1c1f; --ok: #6fd3a0; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 var(--sans); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-left)) 64px; display: grid; gap: 28px; }
+  h1 { font-size: clamp(26px, 5vw, 36px); line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: 22px; margin: 0 0 8px; }
+  p { margin: 0; }
+  .lead { color: var(--muted); font-size: 18px; }
+  .calc { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 16px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+  label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+  input, select { font: inherit; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); width: 100%; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .check { display: flex; gap: 10px; align-items: center; font-weight: 400; }
+  .check input { width: auto; }
+  .result { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+  .line { display: flex; justify-content: space-between; gap: 12px; }
+  .line.total { font-size: 22px; font-weight: 700; padding-top: 6px; border-top: 1px dashed var(--line); margin-top: 4px; }
+  .line.each { color: var(--accent); font-weight: 700; }
+  .cta { background: var(--accent-soft); border-radius: 14px; padding: 18px 20px; display: grid; gap: 10px; }
+  .btn { display: inline-block; justify-self: start; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; padding: 12px 18px; border-radius: 999px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .faq { display: grid; gap: 16px; }
+  .note { color: var(--muted); font-size: 14px; }
+  footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header style="display:grid;gap:10px">
+    <h1>Calcul de la taxe au Québec et du pourboire</h1>
+    <p class="lead">Entrez le prix affiché : vous obtenez la TPS, la TVQ, le pourboire et la part de chacun. Valable aussi pour l'Ontario et les 13 provinces et territoires.</p>
+  </header>
+
+  <section class="calc" aria-label="Calculateur">
+    <div class="row">
+      <label for="montant">Prix avant taxes ($)
+        <input id="montant" type="text" inputmode="decimal" placeholder="45,80" autocomplete="off">
+      </label>
+      <label for="province">Province ou territoire
+        <select id="province"></select>
+      </label>
+    </div>
+    <div class="row">
+      <label for="pourboire">Pourboire (%)
+        <select id="pourboire">
+          <option value="0">Aucun</option>
+          <option value="15">15 %</option>
+          <option value="18" selected>18 %</option>
+          <option value="20">20 %</option>
+          <option value="25">25 %</option>
+        </select>
+      </label>
+      <label for="personnes">Nombre de personnes
+        <input id="personnes" type="number" min="1" max="50" value="1">
+      </label>
+    </div>
+    <label class="check" for="surtaxes"><input id="surtaxes" type="checkbox"> Calculer le pourboire sur le montant taxes comprises</label>
+    <div class="result" id="resultat" aria-live="polite"></div>
+  </section>
+
+  <section class="cta">
+    <h2>La même chose sur votre iPhone, hors ligne</h2>
+    <p>TaxTip fait ce calcul en un écran, pour les 13 provinces et territoires et les 50 États américains. Gratuit, bilingue, sans compte et sans connexion.</p>
+    <a class="btn" href="https://apps.apple.com/ca/app/id6761360591">Télécharger TaxTip sur l'App Store</a>
+  </section>
+
+  <section>
+    <h2>Taux de taxe de vente par province</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Province ou territoire</th><th>Taxes</th><th>Total</th></tr></thead>
+        <tbody id="taux"></tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:8px">Taux vérifiés le 9 octobre 2026. Certains produits sont exonérés ou taxés autrement (épicerie de base, vêtements pour enfants selon la province) : ce calcul vaut pour un achat courant ou un repas au restaurant.</p>
+  </section>
+
+  <section class="faq">
+    <h2>Questions fréquentes</h2>
+    <div><h3>Quel est le taux de taxe au Québec ?</h3>
+      <p>Au Québec, on paie la TPS fédérale de 5 % et la TVQ provinciale de 9,975 %, soit 14,975 % au total. Les deux taxes se calculent sur le prix avant taxes : pour 100 $, la TPS fait 5,00 $, la TVQ 9,98 $, et l'addition 114,98 $.</p></div>
+    <div><h3>Le pourboire se calcule-t-il avant ou après les taxes ?</h3>
+      <p>L'usage au Québec est de calculer le pourboire sur le montant avant taxes, entre 15 et 20 % au restaurant. Beaucoup de terminaux de paiement le proposent sur le total taxes comprises, ce qui revient à donner un peu plus. Cochez la case du calculateur pour voir la différence.</p></div>
+    <div><h3>Quelle est la taxe en Ontario ?</h3>
+      <p>L'Ontario applique la TVH (taxe de vente harmonisée) de 13 %, qui remplace la TPS et la taxe provinciale. Pour 100 $, l'addition fait 113 $ avant pourboire.</p></div>
+    <div><h3>Pourquoi le prix affiché n'est-il jamais le prix payé ?</h3>
+      <p>Au Canada, comme aux États-Unis, les prix sont affichés sans les taxes, qui s'ajoutent à la caisse. C'est ce qui surprend les visiteurs et les nouveaux arrivants.</p></div>
+  </section>
+
+  <footer>
+    <p>TaxTip, application de Gerson Solimon. Ce calculateur donne une estimation et ne constitue pas un avis fiscal.</p>
+    <p><a href="https://sullydgee.github.io/taxtip-legal/">Confidentialité et conditions</a></p>
+  </footer>
+</main>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+ {"@type":"Question","name":"Quel est le taux de taxe au Québec ?","acceptedAnswer":{"@type":"Answer","text":"TPS 5 % + TVQ 9,975 %, soit 14,975 % au total, calculées sur le prix avant taxes."}},
+ {"@type":"Question","name":"Le pourboire se calcule-t-il avant ou après les taxes ?","acceptedAnswer":{"@type":"Answer","text":"L'usage au Québec est de calculer le pourboire sur le montant avant taxes, entre 15 et 20 % au restaurant."}},
+ {"@type":"Question","name":"Quelle est la taxe en Ontario ?","acceptedAnswer":{"@type":"Answer","text":"La TVH de 13 %."}}
+]}
+</script>
+<script>
+// Mêmes taux que l'app (src/engines/taxEngine.ts), vérifiés le 9/10/2026.
+const PROVINCES = [
+  ["QC","Québec",[["TPS",5],["TVQ",9.975]]],
+  ["ON","Ontario",[["TVH",13]]],
+  ["AB","Alberta",[["TPS",5]]],
+  ["BC","Colombie-Britannique",[["TPS",5],["TVP",7]]],
+  ["MB","Manitoba",[["TPS",5],["TVD",7]]],
+  ["NB","Nouveau-Brunswick",[["TVH",15]]],
+  ["NL","Terre-Neuve-et-Labrador",[["TVH",15]]],
+  ["NS","Nouvelle-Écosse",[["TVH",14]]],
+  ["PE","Île-du-Prince-Édouard",[["TVH",15]]],
+  ["SK","Saskatchewan",[["TPS",5],["TVP",6]]],
+  ["NT","Territoires du Nord-Ouest",[["TPS",5]]],
+  ["NU","Nunavut",[["TPS",5]]],
+  ["YT","Yukon",[["TPS",5]]],
+];
+const $ = (id) => document.getElementById(id);
+const money = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" });
+const pct = (r) => r.toLocaleString("fr-CA", { maximumFractionDigits: 3 }) + " %";
+const round = (x) => Math.round(x * 100) / 100;
+
+for (const [code, name] of PROVINCES) $("province").add(new Option(name, code));
+$("taux").innerHTML = PROVINCES.map(([, name, taxes]) =>
+  `<tr><td>${name}</td><td>${taxes.map(([l, r]) => `${l} ${pct(r)}`).join(" + ")}</td><td>${pct(taxes.reduce((s, [, r]) => s + r, 0))}</td></tr>`
+).join("");
+
+function compute() {
+  const amount = parseFloat(($("montant").value || "").replace(/\s/g, "").replace(",", ".")) || 0;
+  const [, , taxes] = PROVINCES.find(([c]) => c === $("province").value);
+  const people = Math.max(1, parseInt($("personnes").value, 10) || 1);
+  const tipRate = parseFloat($("pourboire").value) / 100;
+  const lines = taxes.map(([label, rate]) => [label + " (" + pct(rate) + ")", round(amount * rate / 100)]);
+  const taxTotal = lines.reduce((s, [, v]) => s + v, 0);
+  const tip = round(($("surtaxes").checked ? amount + taxTotal : amount) * tipRate);
+  const total = round(amount + taxTotal + tip);
+  const rows = [["Prix avant taxes", amount], ...lines];
+  if (tipRate > 0) rows.push(["Pourboire (" + Math.round(tipRate * 100) + " %)", tip]);
+  let html = rows.map(([l, v]) => `<div class="line"><span>${l}</span><span>${money.format(v)}</span></div>`).join("");
+  html += `<div class="line total"><span>Total à payer</span><span>${money.format(total)}</span></div>`;
+  if (people > 1) html += `<div class="line each"><span>Par personne (${people})</span><span>${money.format(round(total / people))}</span></div>`;
+  $("resultat").innerHTML = amount > 0 ? html : `<p class="note">Entrez un prix pour voir le total.</p>`;
+}
+for (const id of ["montant", "province", "pourboire", "personnes", "surtaxes"]) {
+  $(id).addEventListener("input", compute);
+  $(id).addEventListener("change", compute);
+}
+compute();
+</script>
+</body>
+</html>
